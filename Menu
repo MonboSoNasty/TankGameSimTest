@@ -1,11 +1,12 @@
---// Tank Game Simulator - Rayfield Version with Key System
+--// Advanced Auto Skill Upgrade with GameSneeze Library GUI
 -- By MonboSoNasty + ChatGPT
+-- Integrated into Library GUI for tabs, toggles, sliders, keybinds, etc.
 
--- Services
+--// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
 
--- Skills to Upgrade
+--// Skills to Upgrade
 local skillList = {
     "Bullet Penetration",
     "Bullet Damage",
@@ -17,7 +18,7 @@ local skillList = {
     "Reload"
 }
 
--- Counters, running state, and fire amounts
+--// Counters
 local counters, running, fireAmounts = {}, {}, {}
 for _, skill in ipairs(skillList) do
     counters[skill] = 0
@@ -25,48 +26,40 @@ for _, skill in ipairs(skillList) do
     fireAmounts[skill] = 1
 end
 
--- Load Rayfield
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+--// Load the Library GUI
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/matas3535/gamesneeze/main/Library.lua"))()
 
--- Key System Enabled
-local Window = Rayfield:CreateWindow({
-    Name = "Tank Game Simulator",
-    LoadingTitle = "Tank Game Simulator",
-    LoadingSubtitle = "by MonboSoNasty",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "TankGameSim",
-        FileName = "Config"
-    },
-    KeySystem = true, -- Key System Enabled
-    KeySettings = {
-        Title = "Tank Game Key",
-        Subtitle = "Enter Key to Access GUI",
-        Note = "Join the Discord for Key (discord.gg/yourserver)",
-        SaveKey = true,
-        Key = "ABC123" -- Replace this with your desired key
-    }
+local Window = Library:New({
+    Name = "Tank Game Simulator" -- Main window title
 })
 
--- Notification example (optional)
-Rayfield:Notify("Welcome!", "Tank Game Simulator Loaded", 4483362458)
+--// Pages (Tabs)
+local SkillPage = Window:Page({Name = "Skill Upgrades"})
+local PlayerPage = Window:Page({Name = "Players"})
 
--- Skill Upgrades Tab
-local SkillTab = Window:CreateTab("Skill Upgrades", 4483362458)
--- Tank Changer Tab (placeholder for later)
-local TankTab = Window:CreateTab("Tank Changer", 4483362458)
+--// Section for Skills
+local SkillSection = SkillPage:Section({
+    Name = "Skills Section",
+    Fill = true,
+    Side = "Left"
+})
 
--- Create sections for each skill
+--// Add all skill controls
 for _, skill in ipairs(skillList) do
-    local section = SkillTab:CreateSection(skill)
+    -- Label for Skill
+    SkillSection:Label({
+        Name = skill,
+        Center = false
+    })
 
-    -- Fire Count Input
-    SkillTab:CreateInput({
-        Name = "Fire Count",
-        PlaceholderText = tostring(fireAmounts[skill]),
-        RemoveTextAfterFocusLost = false,
-        Callback = function(text)
-            local val = tonumber(text)
+    -- Fire Amount Input
+    SkillSection:TextBox({
+        Default = tostring(fireAmounts[skill]),
+        Placeholder = "Fire Count",
+        Max = 100,
+        Reactive = true,
+        Callback = function(value)
+            local val = tonumber(value)
             if val and val > 0 then
                 fireAmounts[skill] = val
             end
@@ -74,46 +67,86 @@ for _, skill in ipairs(skillList) do
     })
 
     -- Counter Label
-    local CounterLabel = SkillTab:CreateLabel("Fired: " .. tostring(counters[skill]))
+    local CounterLabel = SkillSection:Label({
+        Name = "Fired: " .. tostring(counters[skill]),
+        Center = true
+    })
 
-    -- Toggle (ON/OFF)
-    SkillTab:CreateToggle({
-        Name = "Enable",
-        CurrentValue = false,
-        Flag = skill .. "_Toggle",
-        Callback = function(Value)
-            running[skill] = Value
-            if Value then
+    -- Toggle for Auto Fire
+    SkillSection:Toggle({
+        Name = "Enable " .. skill,
+        callback = function(value)
+            running[skill] = value
+            if value then
                 task.spawn(function()
                     for _ = 1, fireAmounts[skill] do
                         if not running[skill] then break end
                         SkillUpgrade:FireServer(skill)
                         counters[skill] += 1
                         CounterLabel:Set("Fired: " .. tostring(counters[skill]))
-                        task.wait()
+                        task.wait() -- small yield to prevent freezing
                     end
                     running[skill] = false
-                    SkillTab:SetFlag(skill .. "_Toggle", false)
+                    SkillSection:SetToggle("Enable " .. skill, false)
                 end)
             end
         end
     })
 end
 
--- Destroy UI button
-SkillTab:CreateButton({
+--// Optional: Destroy GUI Button
+SkillSection:Button({
     Name = "Destroy UI",
-    Callback = function()
-        Rayfield:Destroy()
+    callback = function()
+        Window:Unload()
     end
 })
+
+--// Extras: Example Sliders, Keybinds, Colorpicker, etc.
+SkillSection:Slider({
+    Name = "Example Slider",
+    Min = 1,
+    Max = 100,
+    Default = 10,
+    callback = function(value)
+        print("Slider Value:", value)
+    end
+})
+
+SkillSection:Keybind({
+    Name = "Example Keybind",
+    Default = Enum.KeyCode.Q,
+    KeybindName = "ExampleKey",
+    Mode = "Toggle",
+    Callback = function(input, state)
+        print("Keybind:", input, "State:", state)
+    end
+})
+
+SkillSection:Colorpicker({
+    Name = "Example Colorpicker",
+    Default = Color3.fromRGB(255,0,0),
+    Transparency = 0.25,
+    Info = "Pick a color",
+    callback = function(color)
+        print("Color:", color)
+    end
+})
+
+--// Player List Page
+local PlayerList = PlayerPage:PlayerList({})
+
+--// Initialize the Window
+Window:Initialize()
 
 --[[ 
 NOTES FOR LEARNING:
 1. counters[skill] = tracks number of times a skill fired.
 2. fireAmounts[skill] = how many times to fire when toggle is ON.
 3. running[skill] = prevents multiple simultaneous fires.
-4. Key System is enabled: must enter correct key to use GUI.
-5. task.wait() = allows yielding for stability.
-6. You can expand: add Reset buttons, sliders, dropdowns, or Tank Changer tab functionality.
+4. SkillSection:TextBox() = allows changing fire amount for each skill.
+5. SkillSection:Toggle() = starts/stops auto-firing for each skill.
+6. Task.wait() = prevents script from freezing Roblox.
+7. You can expand PlayerPage or add more tabs like TankChanger.
+8. Window:Unload() = destroys the GUI safely.
 --]]
