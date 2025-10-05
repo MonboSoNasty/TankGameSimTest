@@ -1,6 +1,7 @@
---// Advanced Rainbow Tabbed GUI
--- By MonboSoNasty + ChatGPT
--- Left tabs, active highlight, rainbow border
+-- Delete old GUI
+if game:GetService("CoreGui"):FindFirstChild("MonboRainbowGUI") then
+	game:GetService("CoreGui").MonboRainbowGUI:Destroy()
+end
 
 --// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -10,17 +11,9 @@ local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgr
 
 --// Skills
 local skillList = {
-	"Bullet Penetration",
-	"Bullet Damage",
-	"Bullet Speed",
-	"Body Damage",
-	"Health Regeneration",
-	"Max Health",
-	"Shield",
-	"Reload"
+	"Bullet Penetration","Bullet Damage","Bullet Speed","Body Damage",
+	"Health Regeneration","Max Health","Shield","Reload"
 }
-
---// Counters
 local counters, running, fireAmounts = {}, {}, {}
 for _, skill in ipairs(skillList) do
 	counters[skill] = 0
@@ -28,237 +21,253 @@ for _, skill in ipairs(skillList) do
 	fireAmounts[skill] = 1
 end
 
---// ScreenGui
+--// Key System UI
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "MonboRainbowGUI"
-ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = game:GetService("CoreGui")
 
---// Rainbow Border Frame
-local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 520, 0, 420)
-MainFrame.Position = UDim2.new(0.5, -260, 0.4, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-MainFrame.BorderSizePixel = 0
-MainFrame.Active = true
-MainFrame.Parent = ScreenGui
+local KeyFrame = Instance.new("Frame")
+KeyFrame.Size = UDim2.new(0,300,0,150)
+KeyFrame.Position = UDim2.new(0.5,-150,0.4,0)
+KeyFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+KeyFrame.BorderSizePixel = 0
+KeyFrame.Parent = ScreenGui
 
--- Rainbow effect
-local Border = Instance.new("UIStroke")
-Border.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-Border.Thickness = 4
-Border.Color = Color3.fromHSV(0,1,1)
-Border.Parent = MainFrame
+local KeyLabel = Instance.new("TextLabel")
+KeyLabel.Size = UDim2.new(1,0,0,50)
+KeyLabel.Position = UDim2.new(0,0,0,10)
+KeyLabel.Text = "Enter Key to Access Menu"
+KeyLabel.TextColor3 = Color3.fromRGB(255,255,255)
+KeyLabel.Font = Enum.Font.SourceSansBold
+KeyLabel.TextSize = 18
+KeyLabel.BackgroundTransparency = 1
+KeyLabel.Parent = KeyFrame
 
-local hue = 0
-RunService.RenderStepped:Connect(function(delta)
-	hue = (hue + delta*0.1) % 1
-	Border.Color = Color3.fromHSV(hue,1,1)
-end)
+local KeyBox = Instance.new("TextBox")
+KeyBox.Size = UDim2.new(0,200,0,40)
+KeyBox.Position = UDim2.new(0.5,-100,0,60)
+KeyBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+KeyBox.TextColor3 = Color3.fromRGB(255,255,255)
+KeyBox.Text = ""
+KeyBox.Font = Enum.Font.Code
+KeyBox.TextSize = 18
+KeyBox.Parent = KeyFrame
 
--- Draggable
-local dragging, dragInput, dragStart, startPos
-local function update(input)
-	local delta = input.Position - dragStart
-	MainFrame.Position = UDim2.new(
-		startPos.X.Scale,
-		startPos.X.Offset + delta.X,
-		startPos.Y.Scale,
-		startPos.Y.Offset + delta.Y
-	)
-end
+local SubmitButton = Instance.new("TextButton")
+SubmitButton.Size = UDim2.new(0,100,0,30)
+SubmitButton.Position = UDim2.new(0.5,-50,0,110)
+SubmitButton.Text = "Submit"
+SubmitButton.BackgroundColor3 = Color3.fromRGB(0,170,0)
+SubmitButton.TextColor3 = Color3.fromRGB(255,255,255)
+SubmitButton.Font = Enum.Font.SourceSansBold
+SubmitButton.TextSize = 16
+SubmitButton.Parent = KeyFrame
 
-MainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
-		dragging = true
-		dragStart = input.Position
-		startPos = MainFrame.Position
-		input.Changed:Connect(function()
-			if input.UserInputState == Enum.UserInputState.End then
-				dragging = false
+local correctKey = "Monbo123"
+
+SubmitButton.MouseButton1Click:Connect(function()
+	if KeyBox.Text == correctKey then
+		KeyFrame:Destroy()
+
+		--// Main GUI
+		local MainFrame = Instance.new("Frame")
+		MainFrame.Size = UDim2.new(0,520,0,420)
+		MainFrame.Position = UDim2.new(0.5,-260,0.4,0)
+		MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+		MainFrame.BorderSizePixel = 0
+		MainFrame.Active = true
+		MainFrame.Parent = ScreenGui
+
+		-- Rainbow border
+		local Border = Instance.new("UIStroke")
+		Border.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+		Border.Thickness = 4
+		Border.Color = Color3.fromHSV(0,1,1)
+		Border.Parent = MainFrame
+		local hue = 0
+		RunService.RenderStepped:Connect(function(dt)
+			hue = (hue + dt*0.1) % 1
+			Border.Color = Color3.fromHSV(hue,1,1)
+		end)
+
+		-- Draggable
+		local dragging, dragInput, dragStart, startPos
+		local function update(input)
+			local delta = input.Position - dragStart
+			MainFrame.Position = UDim2.new(startPos.X.Scale,startPos.X.Offset + delta.X,startPos.Y.Scale,startPos.Y.Offset + delta.Y)
+		end
+		MainFrame.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 then
+				dragging=true
+				dragStart=input.Position
+				startPos=MainFrame.Position
+				input.Changed:Connect(function()
+					if input.UserInputState==Enum.UserInputState.End then dragging=false end
+				end)
 			end
 		end)
-	end
-end)
+		MainFrame.InputChanged:Connect(function(input)
+			if input.UserInputType==Enum.UserInputType.MouseMovement then dragInput=input end
+		end)
+		UIS.InputChanged:Connect(function(input)
+			if input==dragInput and dragging then update(input) end
+		end)
 
-MainFrame.InputChanged:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseMovement then
-		dragInput = input
-	end
-end)
+		-- Title
+		local Title = Instance.new("TextLabel")
+		Title.Size = UDim2.new(1,0,0,35)
+		Title.BackgroundColor3 = Color3.fromRGB(45,45,45)
+		Title.TextColor3 = Color3.fromRGB(255,255,255)
+		Title.Font = Enum.Font.SourceSansBold
+		Title.TextSize = 18
+		Title.Text = "⚙️ MonboSoNasty GUI"
+		Title.Parent = MainFrame
 
-UIS.InputChanged:Connect(function(input)
-	if input == dragInput and dragging then
-		update(input)
-	end
-end)
+		-- Left Tab Panel
+		local TabPanel = Instance.new("Frame")
+		TabPanel.Size = UDim2.new(0,140,1,-35)
+		TabPanel.Position = UDim2.new(0,0,0,35)
+		TabPanel.BackgroundColor3 = Color3.fromRGB(40,40,40)
+		TabPanel.Parent = MainFrame
 
--- Title
-local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 35)
-Title.BackgroundColor3 = Color3.fromRGB(45,45,45)
-Title.TextColor3 = Color3.fromRGB(255,255,255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 18
-Title.Text = "⚙️ MonboSoNasty GUI"
-Title.Parent = MainFrame
+		-- Right Content
+		local ContentFrame = Instance.new("Frame")
+		ContentFrame.Size = UDim2.new(1,-140,1,-35)
+		ContentFrame.Position = UDim2.new(0,140,0,35)
+		ContentFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
+		ContentFrame.Parent = MainFrame
 
--- Left Tab Panel
-local TabPanel = Instance.new("Frame")
-TabPanel.Size = UDim2.new(0, 140, 1, -35)
-TabPanel.Position = UDim2.new(0,0,0,35)
-TabPanel.BackgroundColor3 = Color3.fromRGB(40,40,40)
-TabPanel.Parent = MainFrame
+		local activeButton
 
--- Right Content Frame
-local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1,-140,1,-35)
-ContentFrame.Position = UDim2.new(0,140,0,35)
-ContentFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
-ContentFrame.Parent = MainFrame
+		local function createTabButton(name, tabFrame)
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1,-10,0,40)
+			btn.Position = UDim2.new(0,5,0,#TabPanel:GetChildren()*45)
+			btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+			btn.TextColor3 = Color3.fromRGB(255,255,255)
+			btn.Font = Enum.Font.SourceSansBold
+			btn.TextSize = 16
+			btn.Text = name
+			btn.Parent = TabPanel
 
--- Active tab tracking
-local activeButton
-
--- Tab creation function
-local function createTabButton(name, tabFrame)
-	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1,-10,0,40)
-	btn.Position = UDim2.new(0,5,0,#TabPanel:GetChildren()*45)
-	btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
-	btn.TextColor3 = Color3.fromRGB(255,255,255)
-	btn.Font = Enum.Font.SourceSansBold
-	btn.TextSize = 16
-	btn.Text = name
-	btn.Parent = TabPanel
-
-	btn.MouseButton1Click:Connect(function()
-		-- hide all tabs
-		for _, f in ipairs(ContentFrame:GetChildren()) do
-			if f:IsA("Frame") then
-				f.Visible = false
-			end
-		end
-		tabFrame.Visible = true
-		-- highlight active button
-		if activeButton then
-			activeButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
-		end
-		btn.BackgroundColor3 = Color3.fromRGB(0,170,0)
-		activeButton = btn
-	end)
-end
-
--- Create tab frames
-local MainMenuFrame = Instance.new("Frame")
-MainMenuFrame.Size = UDim2.new(1,0,1,0)
-MainMenuFrame.BackgroundTransparency = 1
-MainMenuFrame.Parent = ContentFrame
-
-local AutoSkillFrame = Instance.new("Frame")
-AutoSkillFrame.Size = UDim2.new(1,0,1,0)
-AutoSkillFrame.BackgroundTransparency = 1
-AutoSkillFrame.Parent = ContentFrame
-
-local TankChangerFrame = Instance.new("Frame")
-TankChangerFrame.Size = UDim2.new(1,0,1,0)
-TankChangerFrame.BackgroundTransparency = 1
-TankChangerFrame.Parent = ContentFrame
-
-local MiscFrame = Instance.new("Frame")
-MiscFrame.Size = UDim2.new(1,0,1,0)
-MiscFrame.BackgroundTransparency = 1
-MiscFrame.Parent = ContentFrame
-
-local CreditsFrame = Instance.new("Frame")
-CreditsFrame.Size = UDim2.new(1,0,1,0)
-CreditsFrame.BackgroundTransparency = 1
-CreditsFrame.Parent = ContentFrame
-
--- Create tab buttons
-createTabButton("Main Menu", MainMenuFrame)
-createTabButton("Auto Skills", AutoSkillFrame)
-createTabButton("Tank Changer", TankChangerFrame)
-createTabButton("Misc", MiscFrame)
-createTabButton("Credits", CreditsFrame)
-
--- Show default tab
-MainMenuFrame.Visible = true
-activeButton = TabPanel:FindFirstChildWhichIsA("TextButton")
-activeButton.BackgroundColor3 = Color3.fromRGB(0,170,0)
-
---// Add Auto Skill UI inside AutoSkillFrame
-for i, skill in ipairs(skillList) do
-	local yPos = (i-1)*45 + 10
-
-	local SkillLabel = Instance.new("TextLabel")
-	SkillLabel.Size = UDim2.new(0,130,0,40)
-	SkillLabel.Position = UDim2.new(0,10,0,yPos)
-	SkillLabel.BackgroundTransparency = 1
-	SkillLabel.TextColor3 = Color3.fromRGB(255,255,255)
-	SkillLabel.Font = Enum.Font.SourceSansBold
-	SkillLabel.TextSize = 16
-	SkillLabel.Text = skill
-	SkillLabel.TextXAlignment = Enum.TextXAlignment.Left
-	SkillLabel.Parent = AutoSkillFrame
-
-	local FireBox = Instance.new("TextBox")
-	FireBox.Size = UDim2.new(0,50,0,30)
-	FireBox.Position = UDim2.new(0,150,0,yPos+5)
-	FireBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
-	FireBox.TextColor3 = Color3.fromRGB(255,255,255)
-	FireBox.Font = Enum.Font.Code
-	FireBox.TextSize = 16
-	FireBox.Text = "1"
-	FireBox.Parent = AutoSkillFrame
-
-	local CounterLabel = Instance.new("TextLabel")
-	CounterLabel.Size = UDim2.new(0,60,0,30)
-	CounterLabel.Position = UDim2.new(0,210,0,yPos+5)
-	CounterLabel.BackgroundTransparency = 1
-	CounterLabel.TextColor3 = Color3.fromRGB(0,255,0)
-	CounterLabel.Font = Enum.Font.Code
-	CounterLabel.TextSize = 14
-	CounterLabel.Text = "0"
-	CounterLabel.Parent = AutoSkillFrame
-
-	local Toggle = Instance.new("TextButton")
-	Toggle.Size = UDim2.new(0,60,0,30)
-	Toggle.Position = UDim2.new(0,280,0,yPos+5)
-	Toggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
-	Toggle.TextColor3 = Color3.fromRGB(255,255,255)
-	Toggle.Font = Enum.Font.SourceSansBold
-	Toggle.TextSize = 16
-	Toggle.Text = "OFF"
-	Toggle.Parent = AutoSkillFrame
-
-	FireBox.FocusLost:Connect(function()
-		local val = tonumber(FireBox.Text)
-		if val and val > 0 then
-			fireAmounts[skill] = val
-		else
-			FireBox.Text = tostring(fireAmounts[skill])
-		end
-	end)
-
-	Toggle.MouseButton1Click:Connect(function()
-		running[skill] = not running[skill]
-		Toggle.Text = running[skill] and "ON" or "OFF"
-		Toggle.BackgroundColor3 = running[skill] and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,45,45)
-
-		if running[skill] then
-			task.spawn(function()
-				for _ = 1, fireAmounts[skill] do
-					if not running[skill] then break end
-					SkillUpgrade:FireServer(skill)
-					counters[skill] += 1
-					CounterLabel.Text = tostring(counters[skill])
-					task.wait()
+			btn.MouseButton1Click:Connect(function()
+				for _, f in ipairs(ContentFrame:GetChildren()) do
+					if f:IsA("Frame") then f.Visible=false end
 				end
-				running[skill] = false
-				Toggle.Text = "OFF"
-				Toggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
+				tabFrame.Visible = true
+				if activeButton then activeButton.BackgroundColor3=Color3.fromRGB(50,50,50) end
+				btn.BackgroundColor3=Color3.fromRGB(0,170,0)
+				activeButton=btn
 			end)
 		end
-	end)
-end
+
+		-- Tab frames
+		local MainMenuFrame = Instance.new("Frame")
+		MainMenuFrame.Size = UDim2.new(1,0,1,0)
+		MainMenuFrame.BackgroundTransparency=1
+		MainMenuFrame.Parent=ContentFrame
+
+		local AutoSkillFrame = Instance.new("Frame")
+		AutoSkillFrame.Size = UDim2.new(1,0,1,0)
+		AutoSkillFrame.BackgroundTransparency=1
+		AutoSkillFrame.Parent=ContentFrame
+
+		local TankChangerFrame = Instance.new("Frame")
+		TankChangerFrame.Size = UDim2.new(1,0,1,0)
+		TankChangerFrame.BackgroundTransparency=1
+		TankChangerFrame.Parent=ContentFrame
+
+		local MiscFrame = Instance.new("Frame")
+		MiscFrame.Size = UDim2.new(1,0,1,0)
+		MiscFrame.BackgroundTransparency=1
+		MiscFrame.Parent=ContentFrame
+
+		local CreditsFrame = Instance.new("Frame")
+		CreditsFrame.Size = UDim2.new(1,0,1,0)
+		CreditsFrame.BackgroundTransparency=1
+		CreditsFrame.Parent=ContentFrame
+
+		-- Create tab buttons
+		createTabButton("Main Menu", MainMenuFrame)
+		createTabButton("Auto Skills", AutoSkillFrame)
+		createTabButton("Tank Changer", TankChangerFrame)
+		createTabButton("Misc", MiscFrame)
+		createTabButton("Credits", CreditsFrame)
+
+		-- Show default tab
+		MainMenuFrame.Visible = true
+		activeButton = TabPanel:FindFirstChildWhichIsA("TextButton")
+		activeButton.BackgroundColor3 = Color3.fromRGB(0,170,0)
+
+		--// Add Auto Skill UI
+		for i, skill in ipairs(skillList) do
+			local yPos = (i-1)*45+10
+			local SkillLabel = Instance.new("TextLabel")
+			SkillLabel.Size=UDim2.new(0,130,0,40)
+			SkillLabel.Position=UDim2.new(0,10,0,yPos)
+			SkillLabel.BackgroundTransparency=1
+			SkillLabel.TextColor3=Color3.fromRGB(255,255,255)
+			SkillLabel.Font=Enum.Font.SourceSansBold
+			SkillLabel.TextSize=16
+			SkillLabel.Text=skill
+			SkillLabel.TextXAlignment=Enum.TextXAlignment.Left
+			SkillLabel.Parent=AutoSkillFrame
+
+			local FireBox=Instance.new("TextBox")
+			FireBox.Size=UDim2.new(0,50,0,30)
+			FireBox.Position=UDim2.new(0,150,0,yPos+5)
+			FireBox.BackgroundColor3=Color3.fromRGB(40,40,40)
+			FireBox.TextColor3=Color3.fromRGB(255,255,255)
+			FireBox.Font=Enum.Font.Code
+			FireBox.TextSize=16
+			FireBox.Text="1"
+			FireBox.Parent=AutoSkillFrame
+
+			local CounterLabel=Instance.new("TextLabel")
+			CounterLabel.Size=UDim2.new(0,60,0,30)
+			CounterLabel.Position=UDim2.new(0,210,0,yPos+5)
+			CounterLabel.BackgroundTransparency=1
+			CounterLabel.TextColor3=Color3.fromRGB(0,255,0)
+			CounterLabel.Font=Enum.Font.Code
+			CounterLabel.TextSize=14
+			CounterLabel.Text="0"
+			CounterLabel.Parent=AutoSkillFrame
+
+			local Toggle=Instance.new("TextButton")
+			Toggle.Size=UDim2.new(0,60,0,30)
+			Toggle.Position=UDim2.new(0,280,0,yPos+5)
+			Toggle.BackgroundColor3=Color3.fromRGB(45,45,45)
+			Toggle.TextColor3=Color3.fromRGB(255,255,255)
+			Toggle.Font=Enum.Font.SourceSansBold
+			Toggle.TextSize=16
+			Toggle.Text="OFF"
+			Toggle.Parent=AutoSkillFrame
+
+			FireBox.FocusLost:Connect(function()
+				local val = tonumber(FireBox.Text)
+				if val and val>0 then fireAmounts[skill]=val else FireBox.Text=tostring(fireAmounts[skill]) end
+			end)
+
+			Toggle.MouseButton1Click:Connect(function()
+				running[skill] = not running[skill]
+				Toggle.Text = running[skill] and "ON" or "OFF"
+				Toggle.BackgroundColor3 = running[skill] and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,45,45)
+				if running[skill] then
+					task.spawn(function()
+						for _=1,fireAmounts[skill] do
+							if not running[skill] then break end
+							SkillUpgrade:FireServer(skill)
+							counters[skill]+=1
+							CounterLabel.Text=tostring(counters[skill])
+							task.wait()
+						end
+						running[skill]=false
+						Toggle.Text="OFF"
+						Toggle.BackgroundColor3=Color3.fromRGB(45,45,45)
+					end)
+				end
+			end)
+		end
+
+	end
+end)
