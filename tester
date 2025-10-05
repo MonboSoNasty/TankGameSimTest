@@ -1,0 +1,119 @@
+--// Tank Game Simulator - Rayfield Version with Key System
+-- By MonboSoNasty + ChatGPT
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
+
+-- Skills to Upgrade
+local skillList = {
+    "Bullet Penetration",
+    "Bullet Damage",
+    "Bullet Speed",
+    "Body Damage",
+    "Health Regeneration",
+    "Max Health",
+    "Shield",
+    "Reload"
+}
+
+-- Counters, running state, and fire amounts
+local counters, running, fireAmounts = {}, {}, {}
+for _, skill in ipairs(skillList) do
+    counters[skill] = 0
+    running[skill] = false
+    fireAmounts[skill] = 1
+end
+
+-- Load Rayfield
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
+-- Key System Enabled
+local Window = Rayfield:CreateWindow({
+    Name = "Tank Game Simulator",
+    LoadingTitle = "Tank Game Simulator",
+    LoadingSubtitle = "by MonboSoNasty",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "TankGameSim",
+        FileName = "Config"
+    },
+    KeySystem = true, -- Key System Enabled
+    KeySettings = {
+        Title = "Tank Game Key",
+        Subtitle = "Enter Key to Access GUI",
+        Note = "Join the Discord for Key (discord.gg/yourserver)",
+        SaveKey = true,
+        Key = "ABC123" -- Replace this with your desired key
+    }
+})
+
+-- Notification example (optional)
+Rayfield:Notify("Welcome!", "Tank Game Simulator Loaded", 4483362458)
+
+-- Skill Upgrades Tab
+local SkillTab = Window:CreateTab("Skill Upgrades", 4483362458)
+-- Tank Changer Tab (placeholder for later)
+local TankTab = Window:CreateTab("Tank Changer", 4483362458)
+
+-- Create sections for each skill
+for _, skill in ipairs(skillList) do
+    local section = SkillTab:CreateSection(skill)
+
+    -- Fire Count Input
+    SkillTab:CreateInput({
+        Name = "Fire Count",
+        PlaceholderText = tostring(fireAmounts[skill]),
+        RemoveTextAfterFocusLost = false,
+        Callback = function(text)
+            local val = tonumber(text)
+            if val and val > 0 then
+                fireAmounts[skill] = val
+            end
+        end
+    })
+
+    -- Counter Label
+    local CounterLabel = SkillTab:CreateLabel("Fired: " .. tostring(counters[skill]))
+
+    -- Toggle (ON/OFF)
+    SkillTab:CreateToggle({
+        Name = "Enable",
+        CurrentValue = false,
+        Flag = skill .. "_Toggle",
+        Callback = function(Value)
+            running[skill] = Value
+            if Value then
+                task.spawn(function()
+                    for _ = 1, fireAmounts[skill] do
+                        if not running[skill] then break end
+                        SkillUpgrade:FireServer(skill)
+                        counters[skill] += 1
+                        CounterLabel:Set("Fired: " .. tostring(counters[skill]))
+                        task.wait()
+                    end
+                    running[skill] = false
+                    SkillTab:SetFlag(skill .. "_Toggle", false)
+                end)
+            end
+        end
+    })
+end
+
+-- Destroy UI button
+SkillTab:CreateButton({
+    Name = "Destroy UI",
+    Callback = function()
+        Rayfield:Destroy()
+    end
+})
+
+--[[ 
+NOTES FOR LEARNING:
+1. counters[skill] = tracks number of times a skill fired.
+2. fireAmounts[skill] = how many times to fire when toggle is ON.
+3. running[skill] = prevents multiple simultaneous fires.
+4. Key System is enabled: must enter correct key to use GUI.
+5. task.wait() = allows yielding for stability.
+6. You can expand: add Reset buttons, sliders, dropdowns, or Tank Changer tab functionality.
+--]]
