@@ -1,13 +1,14 @@
---// Advanced Tabbed GUI with Auto Skill Upgrade
+--// Advanced Rainbow Tabbed GUI
 -- By MonboSoNasty + ChatGPT
--- Fires instantly, draggable, tab system
+-- Left tabs, active highlight, rainbow border
 
 --// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
 
---// Skills to Upgrade
+--// Skills
 local skillList = {
 	"Bullet Penetration",
 	"Bullet Damage",
@@ -29,20 +30,33 @@ end
 
 --// ScreenGui
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "MonboTabbedGUI"
+ScreenGui.Name = "MonboRainbowGUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = game:GetService("CoreGui")
 
--- Main Frame
+--// Rainbow Border Frame
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 500, 0, 400)
-MainFrame.Position = UDim2.new(0.5, -250, 0.4, 0)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Size = UDim2.new(0, 520, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -260, 0.4, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 MainFrame.BorderSizePixel = 0
 MainFrame.Active = true
 MainFrame.Parent = ScreenGui
 
--- Make draggable
+-- Rainbow effect
+local Border = Instance.new("UIStroke")
+Border.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+Border.Thickness = 4
+Border.Color = Color3.fromHSV(0,1,1)
+Border.Parent = MainFrame
+
+local hue = 0
+RunService.RenderStepped:Connect(function(delta)
+	hue = (hue + delta*0.1) % 1
+	Border.Color = Color3.fromHSV(hue,1,1)
+end)
+
+-- Draggable
 local dragging, dragInput, dragStart, startPos
 local function update(input)
 	local delta = input.Position - dragStart
@@ -82,8 +96,8 @@ end)
 -- Title
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 35)
-Title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.BackgroundColor3 = Color3.fromRGB(45,45,45)
+Title.TextColor3 = Color3.fromRGB(255,255,255)
 Title.Font = Enum.Font.SourceSansBold
 Title.TextSize = 18
 Title.Text = "⚙️ MonboSoNasty GUI"
@@ -91,102 +105,133 @@ Title.Parent = MainFrame
 
 -- Left Tab Panel
 local TabPanel = Instance.new("Frame")
-TabPanel.Size = UDim2.new(0, 120, 1, -35)
-TabPanel.Position = UDim2.new(0, 0, 0, 35)
-TabPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TabPanel.Size = UDim2.new(0, 140, 1, -35)
+TabPanel.Position = UDim2.new(0,0,0,35)
+TabPanel.BackgroundColor3 = Color3.fromRGB(40,40,40)
 TabPanel.Parent = MainFrame
 
 -- Right Content Frame
 local ContentFrame = Instance.new("Frame")
-ContentFrame.Size = UDim2.new(1, -120, 1, -35)
-ContentFrame.Position = UDim2.new(0, 120, 0, 35)
-ContentFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+ContentFrame.Size = UDim2.new(1,-140,1,-35)
+ContentFrame.Position = UDim2.new(0,140,0,35)
+ContentFrame.BackgroundColor3 = Color3.fromRGB(35,35,35)
 ContentFrame.Parent = MainFrame
 
--- Function to create tabs
+-- Active tab tracking
+local activeButton
+
+-- Tab creation function
 local function createTabButton(name, tabFrame)
 	local btn = Instance.new("TextButton")
-	btn.Size = UDim2.new(1, -10, 0, 40)
-	btn.Position = UDim2.new(0, 5, 0, (#TabPanel:GetChildren()-1)*45)
-	btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Size = UDim2.new(1,-10,0,40)
+	btn.Position = UDim2.new(0,5,0,#TabPanel:GetChildren()*45)
+	btn.BackgroundColor3 = Color3.fromRGB(50,50,50)
+	btn.TextColor3 = Color3.fromRGB(255,255,255)
 	btn.Font = Enum.Font.SourceSansBold
 	btn.TextSize = 16
 	btn.Text = name
 	btn.Parent = TabPanel
 
 	btn.MouseButton1Click:Connect(function()
-		-- Hide all frames in ContentFrame
-		for _, frame in ipairs(ContentFrame:GetChildren()) do
-			if frame:IsA("Frame") then
-				frame.Visible = false
+		-- hide all tabs
+		for _, f in ipairs(ContentFrame:GetChildren()) do
+			if f:IsA("Frame") then
+				f.Visible = false
 			end
 		end
-		-- Show clicked tab
 		tabFrame.Visible = true
+		-- highlight active button
+		if activeButton then
+			activeButton.BackgroundColor3 = Color3.fromRGB(50,50,50)
+		end
+		btn.BackgroundColor3 = Color3.fromRGB(0,170,0)
+		activeButton = btn
 	end)
 end
 
---// Skill Tab Frame
-local SkillTabFrame = Instance.new("Frame")
-SkillTabFrame.Size = UDim2.new(1, 0, 1, 0)
-SkillTabFrame.Position = UDim2.new(0, 0, 0, 0)
-SkillTabFrame.BackgroundTransparency = 1
-SkillTabFrame.Parent = ContentFrame
-SkillTabFrame.Visible = true -- visible by default
+-- Create tab frames
+local MainMenuFrame = Instance.new("Frame")
+MainMenuFrame.Size = UDim2.new(1,0,1,0)
+MainMenuFrame.BackgroundTransparency = 1
+MainMenuFrame.Parent = ContentFrame
 
-createTabButton("Auto Skills", SkillTabFrame)
+local AutoSkillFrame = Instance.new("Frame")
+AutoSkillFrame.Size = UDim2.new(1,0,1,0)
+AutoSkillFrame.BackgroundTransparency = 1
+AutoSkillFrame.Parent = ContentFrame
 
---// Add Skill UI inside SkillTabFrame
+local TankChangerFrame = Instance.new("Frame")
+TankChangerFrame.Size = UDim2.new(1,0,1,0)
+TankChangerFrame.BackgroundTransparency = 1
+TankChangerFrame.Parent = ContentFrame
+
+local MiscFrame = Instance.new("Frame")
+MiscFrame.Size = UDim2.new(1,0,1,0)
+MiscFrame.BackgroundTransparency = 1
+MiscFrame.Parent = ContentFrame
+
+local CreditsFrame = Instance.new("Frame")
+CreditsFrame.Size = UDim2.new(1,0,1,0)
+CreditsFrame.BackgroundTransparency = 1
+CreditsFrame.Parent = ContentFrame
+
+-- Create tab buttons
+createTabButton("Main Menu", MainMenuFrame)
+createTabButton("Auto Skills", AutoSkillFrame)
+createTabButton("Tank Changer", TankChangerFrame)
+createTabButton("Misc", MiscFrame)
+createTabButton("Credits", CreditsFrame)
+
+-- Show default tab
+MainMenuFrame.Visible = true
+activeButton = TabPanel:FindFirstChildWhichIsA("TextButton")
+activeButton.BackgroundColor3 = Color3.fromRGB(0,170,0)
+
+--// Add Auto Skill UI inside AutoSkillFrame
 for i, skill in ipairs(skillList) do
 	local yPos = (i-1)*45 + 10
 
-	-- Skill Label
 	local SkillLabel = Instance.new("TextLabel")
-	SkillLabel.Size = UDim2.new(0, 130, 0, 40)
-	SkillLabel.Position = UDim2.new(0, 10, 0, yPos)
+	SkillLabel.Size = UDim2.new(0,130,0,40)
+	SkillLabel.Position = UDim2.new(0,10,0,yPos)
 	SkillLabel.BackgroundTransparency = 1
-	SkillLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	SkillLabel.TextColor3 = Color3.fromRGB(255,255,255)
 	SkillLabel.Font = Enum.Font.SourceSansBold
 	SkillLabel.TextSize = 16
 	SkillLabel.Text = skill
 	SkillLabel.TextXAlignment = Enum.TextXAlignment.Left
-	SkillLabel.Parent = SkillTabFrame
+	SkillLabel.Parent = AutoSkillFrame
 
-	-- Fire amount box
 	local FireBox = Instance.new("TextBox")
-	FireBox.Size = UDim2.new(0, 50, 0, 30)
-	FireBox.Position = UDim2.new(0, 150, 0, yPos + 5)
-	FireBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-	FireBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+	FireBox.Size = UDim2.new(0,50,0,30)
+	FireBox.Position = UDim2.new(0,150,0,yPos+5)
+	FireBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+	FireBox.TextColor3 = Color3.fromRGB(255,255,255)
 	FireBox.Font = Enum.Font.Code
 	FireBox.TextSize = 16
 	FireBox.Text = "1"
-	FireBox.Parent = SkillTabFrame
+	FireBox.Parent = AutoSkillFrame
 
-	-- Counter Label
 	local CounterLabel = Instance.new("TextLabel")
-	CounterLabel.Size = UDim2.new(0, 60, 0, 30)
-	CounterLabel.Position = UDim2.new(0, 210, 0, yPos + 5)
+	CounterLabel.Size = UDim2.new(0,60,0,30)
+	CounterLabel.Position = UDim2.new(0,210,0,yPos+5)
 	CounterLabel.BackgroundTransparency = 1
-	CounterLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+	CounterLabel.TextColor3 = Color3.fromRGB(0,255,0)
 	CounterLabel.Font = Enum.Font.Code
 	CounterLabel.TextSize = 14
 	CounterLabel.Text = "0"
-	CounterLabel.Parent = SkillTabFrame
+	CounterLabel.Parent = AutoSkillFrame
 
-	-- Toggle Button
 	local Toggle = Instance.new("TextButton")
-	Toggle.Size = UDim2.new(0, 60, 0, 30)
-	Toggle.Position = UDim2.new(0, 280, 0, yPos + 5)
-	Toggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	Toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Toggle.Size = UDim2.new(0,60,0,30)
+	Toggle.Position = UDim2.new(0,280,0,yPos+5)
+	Toggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
+	Toggle.TextColor3 = Color3.fromRGB(255,255,255)
 	Toggle.Font = Enum.Font.SourceSansBold
 	Toggle.TextSize = 16
 	Toggle.Text = "OFF"
-	Toggle.Parent = SkillTabFrame
+	Toggle.Parent = AutoSkillFrame
 
-	-- FireBox input
 	FireBox.FocusLost:Connect(function()
 		local val = tonumber(FireBox.Text)
 		if val and val > 0 then
@@ -196,11 +241,10 @@ for i, skill in ipairs(skillList) do
 		end
 	end)
 
-	-- Toggle behavior
 	Toggle.MouseButton1Click:Connect(function()
 		running[skill] = not running[skill]
 		Toggle.Text = running[skill] and "ON" or "OFF"
-		Toggle.BackgroundColor3 = running[skill] and Color3.fromRGB(0, 170, 0) or Color3.fromRGB(45, 45, 45)
+		Toggle.BackgroundColor3 = running[skill] and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,45,45)
 
 		if running[skill] then
 			task.spawn(function()
@@ -213,7 +257,7 @@ for i, skill in ipairs(skillList) do
 				end
 				running[skill] = false
 				Toggle.Text = "OFF"
-				Toggle.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+				Toggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
 			end)
 		end
 	end)
