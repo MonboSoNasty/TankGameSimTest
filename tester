@@ -36,7 +36,7 @@ local Localization = WindUI:Localization({
 WindUI.TransparencyValue = 0.2
 WindUI:SetTheme("Dark")
 
---// Gradient Helper
+-- Gradient Helper
 local function gradient(text, startColor, endColor)
     local result = ""
     for i = 1, #text do
@@ -44,7 +44,7 @@ local function gradient(text, startColor, endColor)
         local r = math.floor((startColor.R + (endColor.R - startColor.R) * t) * 255)
         local g = math.floor((startColor.G + (endColor.G - startColor.G) * t) * 255)
         local b = math.floor((startColor.B + (endColor.B - startColor.B) * t) * 255)
-        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i, i))
+        result = result .. string.format('<font color="rgb(%d,%d,%d)">%s</font>', r, g, b, text:sub(i,i))
     end
     return result
 end
@@ -72,9 +72,8 @@ Window:Tag({ Title = "Beta", Color = Color3.fromHex("#315dff") })
 local TimeTag = Window:Tag({
     Title = "--:--",
     Radius = 0,
-    Color = WindUI:Gradient({ ["0"] = { Color = Color3.fromHex("#FF0F7B"), Transparency = 0 }, ["100"] = { Color = Color3.fromHex("#F89B29"), Transparency = 0 } }, { Rotation = 45 })
+    Color = WindUI:Gradient({ ["0"]={Color=Color3.fromHex("#FF0F7B"),Transparency=0}, ["100"]={Color=Color3.fromHex("#F89B29"),Transparency=0}}, {Rotation=45})
 })
-
 local hue = 0
 task.spawn(function()
 	while true do
@@ -82,7 +81,6 @@ task.spawn(function()
 		local hours = string.format("%02d", now.hour)
 		local minutes = string.format("%02d", now.min)
 		hue = (hue + 0.01) % 1
-		local color = Color3.fromHSV(hue,1,1)
 		TimeTag:SetTitle(hours..":"..minutes)
 		task.wait(0.06)
 	end
@@ -91,30 +89,31 @@ end)
 --// Topbar Button - Theme switcher
 Window:CreateTopbarButton("theme-switcher", "moon", function()
     WindUI:SetTheme(WindUI:GetCurrentTheme() == "Dark" and "Light" or "Dark")
-    WindUI:Notify({ Title = "Theme Changed", Content = "Current theme: "..WindUI:GetCurrentTheme(), Duration = 2 })
+    WindUI:Notify({ Title="Theme Changed", Content="Current theme: "..WindUI:GetCurrentTheme(), Duration=2 })
 end, 990)
 
 --// Sections
 local Sections = {
-    Features = Window:Section({ Title = "loc:FEATURES", Opened = true }),
-    Appearance = Window:Section({ Title = "loc:APPEARANCE", Opened = true }),
-    Config = Window:Section({ Title = "loc:CONFIGURATION", Opened = true })
+    Features = Window:Section({ Title="loc:FEATURES", Opened=true }),
+    Appearance = Window:Section({ Title="loc:APPEARANCE", Opened=true }),
+    Config = Window:Section({ Title="loc:CONFIGURATION", Opened=true })
 }
 
 --// -------------------------------
--- FEATURES TAB: OP AutoSkills
+-- FEATURES: OP AutoSkills Tab
 --// -------------------------------
+local FeatureTab = Sections.Features:Tab({ Title="OP AutoSkills", Icon="zap" })
+FeatureTab:Section({ Title="⚙️ Auto Skills", TextSize=20 })
+
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
 local skillList = { "Bullet Penetration","Bullet Damage","Bullet Speed","Body Damage","Health Regeneration","Max Health","Shield","Reload" }
 local running, fireAmounts = {}, {}
-
-Sections.Features:Section({ Title = "⚙️ OP AutoSkills", TextSize = 20 })
 
 for _, skill in ipairs(skillList) do
     running[skill] = false
     fireAmounts[skill] = 1
 
-    local toggle = Sections.Features:Toggle({
+    FeatureTab:Toggle({
         Title = skill,
         Value = false,
         Callback = function(state)
@@ -127,14 +126,14 @@ for _, skill in ipairs(skillList) do
                         task.wait()
                     end
                     running[skill] = false
-                    WindUI:Notify({ Title = "AutoSkills", Content = skill .. " upgrades finished!", Duration = 2 })
+                    WindUI:Notify({ Title="AutoSkills", Content=skill.." upgrades finished!", Duration=2 })
                 end)
             end
         end
     })
 
-    Sections.Features:Input({
-        Title = "Fire Count for " .. skill,
+    FeatureTab:Input({
+        Title = "Fire Count for "..skill,
         Value = tostring(fireAmounts[skill]),
         Placeholder = "Enter amount",
         Callback = function(text)
@@ -142,132 +141,151 @@ for _, skill in ipairs(skillList) do
             if val and val > 0 then
                 fireAmounts[skill] = val
             else
-                WindUI:Notify({ Title = "Invalid Input", Content = "Please enter a valid number above 0.", Duration = 2 })
+                WindUI:Notify({ Title="Invalid Input", Content="Please enter a valid number above 0.", Duration=2 })
             end
         end
     })
 end
 
 --// -------------------------------
--- TANK CHANGER TAB
+-- FEATURES: Tank Changer Tab
 --// -------------------------------
-local Tabs = { TankChanger = Window:Tab({ Title = "Tank Changer", Icon = "car" }) }
+local TankTab = Sections.Features:Tab({ Title="Tank Changer", Icon="car" })
+TankTab:Section({ Title="🛞 Tank Changer", TextSize=20 })
 
 local tierNames = {
-    ["Tier 0"] = {"Coming Soon"},
-    ["Tier 1"] = {"Crusher", "Director", "Guard", "Machine Gun", "Sniper", "Trapper", "TwinShot"},
-    ["Tier 2"] = {"Coming Soon"},
-    ["Tier 3"] = {"Coming Soon"},
-    ["Tier 4"] = {"Coming Soon"}
+    ["Tier 0"]={"Coming Soon"},
+    ["Tier 1"]={"Crusher","Director","Guard","Machine Gun","Sniper","Trapper","TwinShot"},
+    ["Tier 2"]={"Coming Soon"},
+    ["Tier 3"]={"Coming Soon"},
+    ["Tier 4"]={"Coming Soon"}
 }
 
-Tabs.TankChanger:Section({ Title = "🛞 Tank Changer", TextSize = 20 })
 local dropdowns = {}
-for tier, tanks in pairs(tierNames) do
-    dropdowns[tier] = Tabs.TankChanger:Dropdown({
+for tier,tanks in pairs(tierNames) do
+    dropdowns[tier] = TankTab:Dropdown({
         Title = tier.." Tanks",
         Values = tanks,
         Callback = function(choice)
-            local args = {choice, 1}
+            local args = {choice,1}
             ReplicatedStorage:WaitForChild("Evolutions"):WaitForChild("UpgradeTank"):FireServer(unpack(args))
-            WindUI:Notify({ Title = "Tank Changer", Content = "Evolving into "..choice.."...", Duration = 2 })
+            WindUI:Notify({ Title="Tank Changer", Content="Evolving into "..choice.."...", Duration=2 })
         end
     })
 end
 
--- Custom tank input
 local customTank = ""
-Tabs.TankChanger:Input({
-    Title = "Custom Tank Name",
-    Placeholder = "Enter tank name here",
-    Callback = function(text) customTank = text end
+TankTab:Input({
+    Title="Custom Tank Name",
+    Placeholder="Enter tank name here",
+    Callback=function(text) customTank=text end
 })
-Tabs.TankChanger:Button({
-    Title = "Change Tank",
-    Desc = "Evolve into custom tank",
-    Callback = function()
-        if customTank == "" then
-            WindUI:Notify({ Title = "Tank Changer", Content = "Please enter a tank name first.", Duration = 2 })
+TankTab:Button({
+    Title="Change Tank",
+    Desc="Evolve into custom tank",
+    Callback=function()
+        if customTank=="" then
+            WindUI:Notify({ Title="Tank Changer", Content="Please enter a tank name first.", Duration=2 })
             return
         end
-        local args = {customTank, 1}
+        local args={customTank,1}
         ReplicatedStorage:WaitForChild("Evolutions"):WaitForChild("UpgradeTank"):FireServer(unpack(args))
-        WindUI:Notify({ Title = "Tank Changer", Content = "Evolving into "..customTank.."...", Duration = 2 })
+        WindUI:Notify({ Title="Tank Changer", Content="Evolving into "..customTank.."...", Duration=2 })
     end
 })
 
 --// -------------------------------
 -- APPEARANCE TAB
 --// -------------------------------
-Tabs.Appearance:Paragraph({ Title = "Customize Interface", Desc = "Personalize your experience", Image = "palette", ImageSize = 20 })
+local AppearanceTab = Sections.Appearance:Tab({ Title="Appearance", Icon="brush" })
+AppearanceTab:Paragraph({ Title="Customize Interface", Desc="Personalize your experience", Image="palette", ImageSize=20 })
 
 local themes = {}
 for name,_ in pairs(WindUI:GetThemes()) do table.insert(themes,name) end
 table.sort(themes)
 
 local canchangetheme = true
-local themeDropdown = Tabs.Appearance:Dropdown({
-    Title = "loc:THEME_SELECT",
-    Values = themes,
-    SearchBarEnabled = true,
-    MenuWidth = 280,
-    Value = "Dark",
-    Callback = function(theme) WindUI:SetTheme(theme) end
+local themeDropdown = AppearanceTab:Dropdown({
+    Title="loc:THEME_SELECT",
+    Values=themes,
+    SearchBarEnabled=true,
+    MenuWidth=280,
+    Value="Dark",
+    Callback=function(theme) WindUI:SetTheme(theme) end
 })
 
-Tabs.Appearance:Slider({
-    Title = "loc:TRANSPARENCY",
-    Value = {Min=0,Max=1,Default=0.2},
+AppearanceTab:Slider({
+    Title="loc:TRANSPARENCY",
+    Value={Min=0,Max=1,Default=0.2},
     Step=0.1,
-    Callback = function(v) WindUI.TransparencyValue=v end
+    Callback=function(v) WindUI.TransparencyValue=v end
 })
 
-Tabs.Appearance:Button({
-    Title = "Create New Theme",
-    Icon = "plus",
-    Callback = function()
-        Window:Dialog({ Title = "Create Theme", Content = "This feature is coming soon!", Buttons = {{Title = "OK", Variant = "Primary"}} })
+AppearanceTab:Button({
+    Title="Create New Theme",
+    Icon="plus",
+    Callback=function()
+        Window:Dialog({ Title="Create Theme", Content="This feature is coming soon!", Buttons={{Title="OK", Variant="Primary"}} })
     end
 })
 
 --// -------------------------------
 -- CONFIG TAB
 --// -------------------------------
-Tabs.Config:Paragraph({ Title = "Configuration Manager", Desc = "Save and load your settings", Image = "save", ImageSize = 20, Color = "White" })
+local ConfigTab = Sections.Config:Tab({ Title="Configuration", Icon="settings" })
+ConfigTab:Paragraph({ Title="Configuration Manager", Desc="Save and load your settings", Image="save", ImageSize=20, Color="White" })
 
-local configName = "default"
-local configFile = nil
-local MyPlayerData = { name = "Player1", level = 1, inventory = { "sword","shield","potion" } }
-
+local configName="default"
+local configFile=nil
+local MyPlayerData={ name="Player1", level=1, inventory={"sword","shield","potion"} }
 local ConfigManager = Window.ConfigManager
+
 if ConfigManager then
     ConfigManager:Init(Window)
-    Tabs.Config:Input({ Title = "Config Name", Value = configName, Callback = function(value) configName = value or "default" end })
 
-    Tabs.Config:Button({ Title = "loc:SAVE_CONFIG", Icon="save", Variant="Primary", Callback=function()
-        configFile = ConfigManager:CreateConfig(configName)
-        configFile:Set("playerData", MyPlayerData)
-        configFile:Set("lastSave", os.date("%Y-%m-%d %H:%M:%S"))
-        if configFile:Save() then
-            WindUI:Notify({ Title = "loc:SAVE_CONFIG", Content = "Saved as: "..configName, Icon = "check", Duration = 3 })
-        else
-            WindUI:Notify({ Title = "Error", Content = "Failed to save config", Icon = "x", Duration = 3 })
-        end
-    end })
+    ConfigTab:Input({
+        Title="Config Name",
+        Value=configName,
+        Callback=function(v) configName=v or "default" end
+    })
 
-    Tabs.Config:Button({ Title = "loc:LOAD_CONFIG", Icon="folder", Callback=function()
-        configFile = ConfigManager:CreateConfig(configName)
-        local loadedData = configFile:Load()
-        if loadedData then
-            if loadedData.playerData then MyPlayerData = loadedData.playerData end
-            WindUI:Notify({ Title = "loc:LOAD_CONFIG", Content = "Loaded: "..configName.."\nLast save: "..(loadedData.lastSave or "Unknown"), Icon = "refresh-cw", Duration = 5 })
-        else
-            WindUI:Notify({ Title = "Error", Content = "Failed to load config", Icon = "x", Duration = 3 })
+    ConfigTab:Button({
+        Title="loc:SAVE_CONFIG",
+        Icon="save",
+        Variant="Primary",
+        Callback=function()
+            configFile=ConfigManager:CreateConfig(configName)
+            if configFile:Save() then
+                WindUI:Notify({ Title="loc:SAVE_CONFIG", Content="Saved as: "..configName, Icon="check", Duration=3 })
+            else
+                WindUI:Notify({ Title="Error", Content="Failed to save config", Icon="x", Duration=3 })
+            end
         end
-    end })
+    })
+
+    ConfigTab:Button({
+        Title="loc:LOAD_CONFIG",
+        Icon="folder",
+        Callback=function()
+            configFile=ConfigManager:CreateConfig(configName)
+            local loadedData=configFile:Load()
+            if loadedData then
+                WindUI:Notify({ Title="loc:LOAD_CONFIG", Content="Loaded: "..configName, Icon="refresh-cw", Duration=5 })
+            else
+                WindUI:Notify({ Title="Error", Content="Failed to load config", Icon="x", Duration=3 })
+            end
+        end
+    })
+else
+    ConfigTab:Paragraph({ Title="Config Manager Not Available", Desc="This feature requires ConfigManager", Image="alert-triangle", ImageSize=20, Color="White" })
 end
 
--- Default open tab
-Window:SelectTab("Features")
+--// Window callbacks
+Window:OnClose(function()
+    if ConfigManager and configFile then
+        configFile:Set("playerData",MyPlayerData)
+        configFile:Set("lastSave",os.date("%Y-%m-%d %H:%M:%S"))
+        configFile:Save()
+    end
+end)
 
-WindUI:Notify({ Title = "WindUI Loaded", Content = "Tank Game Hub Ready!", Duration = 3 })
