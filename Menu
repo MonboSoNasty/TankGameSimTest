@@ -1,0 +1,103 @@
+--// Rayfield UI Implementation for Tank Game Simulator
+-- By MonboSoNasty + ChatGPT
+
+-- Load Rayfield
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/SiriusSoftwareLtd/Rayfield/main/source.lua'))()
+
+--// Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
+
+--// Skills to Upgrade
+local skillList = {
+	"Bullet Penetration",
+	"Bullet Damage",
+	"Bullet Speed",
+	"Body Damage",
+	"Health Regeneration",
+	"Max Health",
+	"Shield",
+	"Reload"
+}
+
+--// Counters and Fire Amounts
+local counters, running, fireAmounts = {}, {}, {}
+for _, skill in ipairs(skillList) do
+	counters[skill] = 0
+	running[skill] = false
+	fireAmounts[skill] = 1
+end
+
+-- Create Main Window
+local Window = Rayfield:CreateWindow({
+	Name = "Tank Game Simulator",
+	LoadingTitle = "Loading Tank Game...",
+	LoadingSubtitle = "by MonboSoNasty",
+	Theme = "Dark",
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = "TankGameSimulator",
+		FileName = "Settings"
+	},
+	KeySystem = false
+})
+
+-- Create Tabs
+local SkillTab = Window:CreateTab("Skill Upgrades", 4483362458)
+local TankTab = Window:CreateTab("Tank Changer", 4483362459)
+
+-- Create a section for each skill in SkillTab
+for _, skill in ipairs(skillList) do
+	local section = SkillTab:CreateSection(skill)
+
+	-- Fire Count TextBox
+	local fireBox = section:CreateTextBox({
+		Name = "Fire Count",
+		Text = "1",
+		PlaceholderText = "Enter amount",
+		Callback = function(Value)
+			local num = tonumber(Value)
+			if num and num > 0 then
+				fireAmounts[skill] = num
+			end
+		end
+	})
+
+	-- Toggle
+	section:CreateToggle({
+		Name = "Enable",
+		CurrentValue = false,
+		Flag = skill.."Toggle",
+		Callback = function(Value)
+			running[skill] = Value
+
+			if Value then
+				task.spawn(function()
+					while running[skill] do
+						SkillUpgrade:FireServer(skill)
+						counters[skill] += 1
+						-- Auto-turn off when counter reaches the Fire Count
+						if counters[skill] >= fireAmounts[skill] then
+							running[skill] = false
+							Rayfield:Notify({
+								Title = "Skill Completed",
+								Content = skill.." has reached "..fireAmounts[skill].." upgrades!",
+								Duration = 3,
+								Image = 4483362458
+							})
+							break
+						end
+						task.wait() -- instant fire but yields for engine
+					end
+				end)
+			end
+		end
+	})
+
+	-- Counter Display (read-only)
+	section:CreateLabel("Fired: "..counters[skill])
+end
+
+-- Tank Changer Tab placeholder
+TankTab:CreateSection("Tank Changer")
+TankTab:CreateLabel("Coming Soon")
