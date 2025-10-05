@@ -1,12 +1,92 @@
---// Advanced Auto Skill Upgrade with GameSneeze Library GUI
+--========================================--
+-- Tank Game Hub (Orion + Advanced Skill GUI)
 -- By MonboSoNasty + ChatGPT
--- Integrated into Library GUI for tabs, toggles, sliders, keybinds, etc.
+-- Notes added for beginners
+--========================================--
 
---// Services
+--// =====================
+--// Load Orion UI Library
+--// =====================
+local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+
+-- Optional notification
+OrionLib:MakeNotification({
+    Name = "Tank Game Hub",
+    Content = "Advanced Auto Skill Upgrade Integrated",
+    Image = "rbxassetid://4483345998",
+    Time = 5
+})
+
+-- Create main window
+local Window = OrionLib:MakeWindow({
+    Name = "Tank Game Hub",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "TankGame"
+})
+
+--// =====================
+--// Player Tab Example
+--// =====================
+local PlayerTab = Window:MakeTab({
+    Name = "Player",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local PlayerSection = PlayerTab:AddSection({Name = "Player Controls"})
+
+-- Walkspeed Slider
+PlayerSection:AddSlider({
+    Name = "Walkspeed",
+    Min = 16,
+    Max = 100,
+    Default = 16,
+    Color = Color3.fromRGB(255,255,255),
+    Increment = 1,
+    ValueName = "Walkspeed",
+    Callback = function(Value)
+        local plr = game.Players.LocalPlayer
+        if plr and plr.Character and plr.Character:FindFirstChild("Humanoid") then
+            plr.Character.Humanoid.WalkSpeed = Value
+        end
+    end    
+})
+
+--// =====================
+--// Settings Tab Example
+--// =====================
+local SettingsTab = Window:MakeTab({
+    Name = "Settings",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local SettingsSection = SettingsTab:AddSection({Name = "Settings"})
+
+SettingsSection:AddButton({
+    Name = "Destroy UI",
+    Callback = function()
+        OrionLib:Destroy()
+    end
+})
+
+--// =====================
+--// Skills Tab (Auto Upgrade)
+--// =====================
+local SkillsTab = Window:MakeTab({
+    Name = "Skills",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+local SkillsSection = SkillsTab:AddSection({Name = "Auto Upgrade Skills"})
+
+-- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
 
---// Skills to Upgrade
+-- Skills to upgrade
 local skillList = {
     "Bullet Penetration",
     "Bullet Damage",
@@ -18,7 +98,7 @@ local skillList = {
     "Reload"
 }
 
---// Counters
+-- Counters for each skill
 local counters, running, fireAmounts = {}, {}, {}
 for _, skill in ipairs(skillList) do
     counters[skill] = 0
@@ -26,127 +106,46 @@ for _, skill in ipairs(skillList) do
     fireAmounts[skill] = 1
 end
 
---// Load the Library GUI
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/matas3535/gamesneeze/main/Library.lua"))()
-
-local Window = Library:New({
-    Name = "Tank Game Simulator" -- Main window title
-})
-
---// Pages (Tabs)
-local SkillPage = Window:Page({Name = "Skill Upgrades"})
-local PlayerPage = Window:Page({Name = "Players"})
-
---// Section for Skills
-local SkillSection = SkillPage:Section({
-    Name = "Skills Section",
-    Fill = true,
-    Side = "Left"
-})
-
---// Add all skill controls
+-- For each skill, create a toggle + fire count input
 for _, skill in ipairs(skillList) do
-    -- Label for Skill
-    SkillSection:Label({
-        Name = skill,
-        Center = false
-    })
-
-    -- Fire Amount Input
-    SkillSection:TextBox({
-        Default = tostring(fireAmounts[skill]),
-        Placeholder = "Fire Count",
-        Max = 100,
-        Reactive = true,
+    -- Fire Amount Input (TextBox replacement)
+    SkillsSection:AddTextbox({
+        Name = skill.." Fire Amount",
+        Default = "1",
+        TextDisappear = false,
         Callback = function(value)
             local val = tonumber(value)
             if val and val > 0 then
                 fireAmounts[skill] = val
+            else
+                fireAmounts[skill] = 1
             end
         end
     })
 
-    -- Counter Label
-    local CounterLabel = SkillSection:Label({
-        Name = "Fired: " .. tostring(counters[skill]),
-        Center = true
-    })
-
-    -- Toggle for Auto Fire
-    SkillSection:Toggle({
-        Name = "Enable " .. skill,
-        callback = function(value)
-            running[skill] = value
-            if value then
+    -- Toggle for auto upgrade
+    SkillsSection:AddToggle({
+        Name = skill.." Auto Upgrade",
+        Default = false,
+        Callback = function(Value)
+            running[skill] = Value
+            if Value then
                 task.spawn(function()
                     for _ = 1, fireAmounts[skill] do
                         if not running[skill] then break end
                         SkillUpgrade:FireServer(skill)
                         counters[skill] += 1
-                        CounterLabel:Set("Fired: " .. tostring(counters[skill]))
-                        task.wait() -- small yield to prevent freezing
+                        print(skill.." upgraded! Total: "..counters[skill])
+                        task.wait() -- allows other processes to run
                     end
                     running[skill] = false
-                    SkillSection:SetToggle("Enable " .. skill, false)
+                    -- Automatically toggle off in Orion UI
+                    SkillsSection:GetToggle(skill.." Auto Upgrade"):Set(false)
                 end)
             end
         end
     })
 end
 
---// Optional: Destroy GUI Button
-SkillSection:Button({
-    Name = "Destroy UI",
-    callback = function()
-        Window:Unload()
-    end
-})
-
---// Extras: Example Sliders, Keybinds, Colorpicker, etc.
-SkillSection:Slider({
-    Name = "Example Slider",
-    Min = 1,
-    Max = 100,
-    Default = 10,
-    callback = function(value)
-        print("Slider Value:", value)
-    end
-})
-
-SkillSection:Keybind({
-    Name = "Example Keybind",
-    Default = Enum.KeyCode.Q,
-    KeybindName = "ExampleKey",
-    Mode = "Toggle",
-    Callback = function(input, state)
-        print("Keybind:", input, "State:", state)
-    end
-})
-
-SkillSection:Colorpicker({
-    Name = "Example Colorpicker",
-    Default = Color3.fromRGB(255,0,0),
-    Transparency = 0.25,
-    Info = "Pick a color",
-    callback = function(color)
-        print("Color:", color)
-    end
-})
-
---// Player List Page
-local PlayerList = PlayerPage:PlayerList({})
-
---// Initialize the Window
-Window:Initialize()
-
---[[ 
-NOTES FOR LEARNING:
-1. counters[skill] = tracks number of times a skill fired.
-2. fireAmounts[skill] = how many times to fire when toggle is ON.
-3. running[skill] = prevents multiple simultaneous fires.
-4. SkillSection:TextBox() = allows changing fire amount for each skill.
-5. SkillSection:Toggle() = starts/stops auto-firing for each skill.
-6. Task.wait() = prevents script from freezing Roblox.
-7. You can expand PlayerPage or add more tabs like TankChanger.
-8. Window:Unload() = destroys the GUI safely.
---]]
+--// Initialize Orion UI
+OrionLib:Init()
