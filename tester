@@ -1,119 +1,106 @@
---// Tank Game Simulator - Rayfield Version with Key System
--- By MonboSoNasty + ChatGPT
-
--- Load Rayfield first
+-- Load Rayfield
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
--- Services
+local Window = Rayfield:CreateWindow({
+	Name = "Rayfield Example Window",
+	LoadingTitle = "Rayfield Interface Suite",
+	LoadingSubtitle = "by Sirius",
+	ConfigurationSaving = {
+		Enabled = true,
+		FolderName = "Rayfield Interface Suite",
+		FileName = "Big Hub"
+	},
+	KeySystem = false
+})
+
+--// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
 
--- Skills to Upgrade
+--// Skills to Upgrade
 local skillList = {
-    "Bullet Penetration",
-    "Bullet Damage",
-    "Bullet Speed",
-    "Body Damage",
-    "Health Regeneration",
-    "Max Health",
-    "Shield",
-    "Reload"
+	"Bullet Penetration",
+	"Bullet Damage",
+	"Bullet Speed",
+	"Body Damage",
+	"Health Regeneration",
+	"Max Health",
+	"Shield",
+	"Reload"
 }
 
--- Counters, running state, and fire amounts
+--// Counters and state tables
 local counters, running, fireAmounts = {}, {}, {}
 for _, skill in ipairs(skillList) do
-    counters[skill] = 0
-    running[skill] = false
-    fireAmounts[skill] = 1
+	counters[skill] = 0
+	running[skill] = false
+	fireAmounts[skill] = 1
 end
 
--- Create main window with Key System
-local Window = Rayfield:CreateWindow({
-    Name = "Tank Game Simulator",
-    LoadingTitle = "Tank Game Simulator",
-    LoadingSubtitle = "by MonboSoNasty",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "TankGameSim",
-        FileName = "Config"
-    },
-    KeySystem = true,
-    KeySettings = {
-        Title = "Tank Game Key",
-        Subtitle = "Enter Key to Access GUI",
-        Note = "Join the Discord for Key (discord.gg/yourserver)",
-        SaveKey = true,
-        Key = "ABC123" -- Replace with your desired key
-    }
-})
+--// Create a new tab in Rayfield for Auto Skills
+local AutoSkillsTab = Window:CreateTab("Auto Skills", 4483362458)
 
--- Notification example (optional)
-Rayfield:Notify("Welcome!", "Tank Game Simulator Loaded", 4483362458)
-
--- Skill Upgrades Tab
-local SkillTab = Window:CreateTab("Skill Upgrades", 4483362458)
--- Tank Changer Tab (placeholder)
-local TankTab = Window:CreateTab("Tank Changer", 4483362458)
-
--- Create sections for each skill
+--// For each skill, create a section with toggle + input + counter
 for _, skill in ipairs(skillList) do
-    local section = SkillTab:CreateSection(skill)
+	-- Section header for the skill
+	local Section = AutoSkillsTab:CreateSection(skill)
 
-    -- Fire Count Input
-    SkillTab:CreateInput({
-        Name = "Fire Count",
-        PlaceholderText = tostring(fireAmounts[skill]),
-        RemoveTextAfterFocusLost = false,
-        Callback = function(text)
-            local val = tonumber(text)
-            if val and val > 0 then
-                fireAmounts[skill] = val
-            end
-        end
-    })
+	-- Fire Amount Input
+	local FireInput = AutoSkillsTab:CreateInput({
+		Name = "Fire Amount",
+		PlaceholderText = "1",
+		RemoveTextAfterFocusLost = false,
+		Callback = function(Text)
+			local val = tonumber(Text)
+			if val and val > 0 then
+				fireAmounts[skill] = val
+			else
+				-- Reset to previous valid value
+				AutoSkillsTab:CreateInput({Name = "Fire Amount", PlaceholderText = tostring(fireAmounts[skill])})
+			end
+		end
+	})
 
-    -- Counter Label
-    local CounterLabel = SkillTab:CreateLabel("Fired: " .. tostring(counters[skill]))
+	-- Counter Label (updates dynamically)
+	local CounterLabel = AutoSkillsTab:CreateLabel("Fired: 0")
 
-    -- Toggle (ON/OFF)
-    SkillTab:CreateToggle({
-        Name = "Enable",
-        CurrentValue = false,
-        Flag = skill .. "_Toggle",
-        Callback = function(Value)
-            running[skill] = Value
-            if Value then
-                task.spawn(function()
-                    for _ = 1, fireAmounts[skill] do
-                        if not running[skill] then break end
-                        SkillUpgrade:FireServer(skill)
-                        counters[skill] += 1
-                        CounterLabel:Set("Fired: " .. tostring(counters[skill]))
-                        task.wait() -- yields for stability
-                    end
-                    running[skill] = false
-                    SkillTab:SetFlag(skill .. "_Toggle", false)
-                end)
-            end
-        end
-    })
+	-- Toggle Button
+	local Toggle = AutoSkillsTab:CreateToggle({
+		Name = "Auto Fire",
+		CurrentValue = false,
+		Flag = skill.."Toggle",
+		Callback = function(Value)
+			running[skill] = Value
+
+			if Value then
+				task.spawn(function()
+					for _ = 1, fireAmounts[skill] do
+						if not running[skill] then break end
+						SkillUpgrade:FireServer(skill)
+						counters[skill] += 1
+						CounterLabel:Set("Fired: "..counters[skill])
+						task.wait() -- yields to allow other processes
+					end
+					running[skill] = false
+					Toggle:Set(false)
+				end)
+			end
+		end
+	})
 end
 
--- Destroy UI button
-SkillTab:CreateButton({
-    Name = "Destroy UI",
-    Callback = function()
-        Rayfield:Destroy()
-    end
+-- Example: Destroy UI Button
+AutoSkillsTab:CreateButton({
+	Name = "Destroy UI",
+	Callback = function()
+		Rayfield:Destroy()
+	end
 })
 
---[[ 
-NOTES FOR LEARNING:
-1. counters[skill] = tracks number of times a skill fired.
-2. fireAmounts[skill] = how many times to fire when toggle is ON.
-3. running[skill] = prevents multiple simultaneous fires.
-4. Key System is enabled: must enter correct key to use GUI.
-5. task.wait() = allows yielding for stability.
-6. You can expand: add Reset buttons, sliders, dropdowns, or Tank Changer tab functionality.
---]]
+-- Notes for you:
+-- 1. To add more skills, just append them to the `skillList` table.
+-- 2. FireAmounts are set per skill using the input boxes.
+-- 3. Counters automatically track how many times each skill has fired.
+-- 4. Toggles control the auto firing, and they respect the fire amount.
+-- 5. All GUI is now inside Rayfield, no separate draggable UI needed.
+
