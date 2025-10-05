@@ -1,6 +1,9 @@
 --// Tank Game Simulator - Rayfield Version with Key System
 -- By MonboSoNasty + ChatGPT
 
+-- Load Rayfield first
+local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
+
 -- Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
@@ -25,10 +28,7 @@ for _, skill in ipairs(skillList) do
     fireAmounts[skill] = 1
 end
 
--- Load Rayfield
-local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
-
--- Key System Enabled
+-- Create main window with Key System
 local Window = Rayfield:CreateWindow({
     Name = "Tank Game Simulator",
     LoadingTitle = "Tank Game Simulator",
@@ -38,13 +38,13 @@ local Window = Rayfield:CreateWindow({
         FolderName = "TankGameSim",
         FileName = "Config"
     },
-    KeySystem = true, -- Key System Enabled
+    KeySystem = true,
     KeySettings = {
         Title = "Tank Game Key",
         Subtitle = "Enter Key to Access GUI",
         Note = "Join the Discord for Key (discord.gg/yourserver)",
         SaveKey = true,
-        Key = "ABC123" -- Replace this with your desired key
+        Key = "ABC123" -- Replace with your desired key
     }
 })
 
@@ -53,7 +53,7 @@ Rayfield:Notify("Welcome!", "Tank Game Simulator Loaded", 4483362458)
 
 -- Skill Upgrades Tab
 local SkillTab = Window:CreateTab("Skill Upgrades", 4483362458)
--- Tank Changer Tab (placeholder for later)
+-- Tank Changer Tab (placeholder)
 local TankTab = Window:CreateTab("Tank Changer", 4483362458)
 
 -- Create sections for each skill
@@ -90,7 +90,7 @@ for _, skill in ipairs(skillList) do
                         SkillUpgrade:FireServer(skill)
                         counters[skill] += 1
                         CounterLabel:Set("Fired: " .. tostring(counters[skill]))
-                        task.wait()
+                        task.wait() -- yields for stability
                     end
                     running[skill] = false
                     SkillTab:SetFlag(skill .. "_Toggle", false)
