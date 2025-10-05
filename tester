@@ -1,4 +1,3 @@
--- Load Rayfield
 local Rayfield = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Rayfield/main/source'))()
 
 local Window = Rayfield:CreateWindow({
@@ -10,97 +9,115 @@ local Window = Rayfield:CreateWindow({
 		FolderName = "Rayfield Interface Suite",
 		FileName = "Big Hub"
 	},
-	KeySystem = false
+	KeySystem = false, -- Set this to true to use their key system
+	KeySettings = {
+		Title = "Sirius Hub",
+		Subtitle = "Key System",
+		Note = "Join the discord (discord.gg/sirius)",
+		SaveKey = true,
+		Key = "ABCDEF"
+	}
 })
 
---// Services
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
+Rayfield:Notify("Title Example", "Content/Description Example", 4483362458) -- Notfication -- Title, Content, Image
 
---// Skills to Upgrade
-local skillList = {
-	"Bullet Penetration",
-	"Bullet Damage",
-	"Bullet Speed",
-	"Body Damage",
-	"Health Regeneration",
-	"Max Health",
-	"Shield",
-	"Reload"
-}
+local Tab = Window:CreateTab("Tab Example", 4483362458) -- Title, Image
 
---// Counters and state tables
-local counters, running, fireAmounts = {}, {}, {}
-for _, skill in ipairs(skillList) do
-	counters[skill] = 0
-	running[skill] = false
-	fireAmounts[skill] = 1
-end
+local Section = Tab:CreateSection("Section Example")
 
---// Create a new tab in Rayfield for Auto Skills
-local AutoSkillsTab = Window:CreateTab("Auto Skills", 4483362458)
+local Button = Tab:CreateButton({
+	Name = "Button Example",
+	Callback = function()
+		-- The function that takes place when the button is pressed
+	end,
+})
 
---// For each skill, create a section with toggle + input + counter
-for _, skill in ipairs(skillList) do
-	-- Section header for the skill
-	local Section = AutoSkillsTab:CreateSection(skill)
+local Toggle = Tab:CreateToggle({
+	Name = "Toggle Example",
+	CurrentValue = false,
+	Flag = "Toggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+	Callback = function(Value)
+		-- The function that takes place when the toggle is pressed
+    		-- The variable (Value) is a boolean on whether the toggle is true or false
+	end,
+})
 
-	-- Fire Amount Input
-	local FireInput = AutoSkillsTab:CreateInput({
-		Name = "Fire Amount",
-		PlaceholderText = "1",
-		RemoveTextAfterFocusLost = false,
-		Callback = function(Text)
-			local val = tonumber(Text)
-			if val and val > 0 then
-				fireAmounts[skill] = val
-			else
-				-- Reset to previous valid value
-				AutoSkillsTab:CreateInput({Name = "Fire Amount", PlaceholderText = tostring(fireAmounts[skill])})
-			end
-		end
-	})
+local Slider = Tab:CreateSlider({
+	Name = "Slider Example",
+	Range = {0, 100},
+	Increment = 10,
+	Suffix = "Bananas",
+	CurrentValue = 10,
+	Flag = "Slider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+	Callback = function(Value)
+		-- The function that takes place when the slider changes
+    		-- The variable (Value) is a number which correlates to the value the slider is currently at
+	end,
+})
 
-	-- Counter Label (updates dynamically)
-	local CounterLabel = AutoSkillsTab:CreateLabel("Fired: 0")
+local Label = Tab:CreateLabel("Label Example")
 
-	-- Toggle Button
-	local Toggle = AutoSkillsTab:CreateToggle({
-		Name = "Auto Fire",
-		CurrentValue = false,
-		Flag = skill.."Toggle",
-		Callback = function(Value)
-			running[skill] = Value
+local Paragraph = Tab:CreateParagraph({Title = "Paragraph Example", Content = "Paragraph Example"})
 
-			if Value then
-				task.spawn(function()
-					for _ = 1, fireAmounts[skill] do
-						if not running[skill] then break end
-						SkillUpgrade:FireServer(skill)
-						counters[skill] += 1
-						CounterLabel:Set("Fired: "..counters[skill])
-						task.wait() -- yields to allow other processes
-					end
-					running[skill] = false
-					Toggle:Set(false)
-				end)
-			end
-		end
-	})
-end
+local Input = Tab:CreateInput({
+	Name = "Input Example",
+	PlaceholderText = "Input Placeholder",
+	RemoveTextAfterFocusLost = false,
+	Callback = function(Text)
+		-- The function that takes place when the input is changed
+    		-- The variable (Text) is a string for the value in the text box
+	end,
+})
 
--- Example: Destroy UI Button
-AutoSkillsTab:CreateButton({
+local Keybind = Tab:CreateKeybind({
+	Name = "Keybind Example",
+	CurrentKeybind = "Q",
+	HoldToInteract = false,
+	Flag = "Keybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+	Callback = function(Keybind)
+		-- The function that takes place when the keybind is pressed
+    		-- The variable (Keybind) is a boolean for whether the keybind is being held or not (HoldToInteract needs to be true)
+	end,
+})
+
+local Dropdown = Tab:CreateDropdown({
+	Name = "Dropdown Example",
+	Options = {"Option 1","Option 2"},
+	CurrentOption = "Option 1",
+	Flag = "Dropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+	Callback = function(Option)
+	  	  -- The function that takes place when the selected option is changed
+    	  -- The variable (Option) is a string for the value that the dropdown was changed to
+	end,
+})
+
+local Button = Tab:CreateButton({
 	Name = "Destroy UI",
 	Callback = function()
 		Rayfield:Destroy()
-	end
+	end,
 })
 
--- Notes for you:
--- 1. To add more skills, just append them to the `skillList` table.
--- 2. FireAmounts are set per skill using the input boxes.
--- 3. Counters automatically track how many times each skill has fired.
--- 4. Toggles control the auto firing, and they respect the fire amount.
--- 5. All GUI is now inside Rayfield, no separate draggable UI needed.
+-- Extras
 
+-- getgenv().SecureMode = true -- Only Set To True If Games Are Detecting/Crashing The UI
+
+-- Rayfield:Destroy() -- Destroys UI
+
+-- Rayfield:LoadConfiguration() -- Enables Configuration Saving
+
+-- Section:Set("Section Example") -- Use To Update Section Text
+
+-- Button:Set("Button Example") -- Use To Update Button Text
+
+-- Toggle:Set(false) -- Use To Update Toggle
+
+-- Slider:Set(10) -- Use To Update Slider Value
+
+-- Label:Set("Label Example") -- Use To Update Label Text
+
+-- Paragraph:Set({Title = "Paragraph Example", Content = "Paragraph Example"}) -- Use To Update Paragraph Text
+
+-- Keybind:Set("RightCtrl") -- Keybind (string) -- Use To Update Keybind
+
+-- Dropdown:Set("Option 2") -- The new option value -- Use To Update/Set New Dropdowns
