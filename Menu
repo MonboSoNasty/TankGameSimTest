@@ -1,151 +1,212 @@
---========================================--
--- Tank Game Hub (Orion + Advanced Skill GUI)
--- By MonboSoNasty + ChatGPT
--- Notes added for beginners
---========================================--
+--// Modern Main Menu with Rainbow Border + Tabs
+--// By MonboSoNasty + ChatGPT
+-- This menu is expandable, and your Advanced Auto Skill Upgrade will be a tab inside it
 
---// =====================
---// Load Orion UI Library
---// =====================
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
-
--- Optional notification
-OrionLib:MakeNotification({
-    Name = "Tank Game Hub",
-    Content = "Advanced Auto Skill Upgrade Integrated",
-    Image = "rbxassetid://4483345998",
-    Time = 5
-})
-
--- Create main window
-local Window = OrionLib:MakeWindow({
-    Name = "Tank Game Hub",
-    HidePremium = false,
-    SaveConfig = true,
-    ConfigFolder = "TankGame"
-})
-
---// =====================
---// Player Tab Example
---// =====================
-local PlayerTab = Window:MakeTab({
-    Name = "Player",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local PlayerSection = PlayerTab:AddSection({Name = "Player Controls"})
-
--- Walkspeed Slider
-PlayerSection:AddSlider({
-    Name = "Walkspeed",
-    Min = 16,
-    Max = 100,
-    Default = 16,
-    Color = Color3.fromRGB(255,255,255),
-    Increment = 1,
-    ValueName = "Walkspeed",
-    Callback = function(Value)
-        local plr = game.Players.LocalPlayer
-        if plr and plr.Character and plr.Character:FindFirstChild("Humanoid") then
-            plr.Character.Humanoid.WalkSpeed = Value
-        end
-    end    
-})
-
---// =====================
---// Settings Tab Example
---// =====================
-local SettingsTab = Window:MakeTab({
-    Name = "Settings",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local SettingsSection = SettingsTab:AddSection({Name = "Settings"})
-
-SettingsSection:AddButton({
-    Name = "Destroy UI",
-    Callback = function()
-        OrionLib:Destroy()
-    end
-})
-
---// =====================
---// Skills Tab (Auto Upgrade)
---// =====================
-local SkillsTab = Window:MakeTab({
-    Name = "Skills",
-    Icon = "rbxassetid://4483345998",
-    PremiumOnly = false
-})
-
-local SkillsSection = SkillsTab:AddSection({Name = "Auto Upgrade Skills"})
-
--- Services
+--// Services
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
 
--- Skills to upgrade
-local skillList = {
-    "Bullet Penetration",
-    "Bullet Damage",
-    "Bullet Speed",
-    "Body Damage",
-    "Health Regeneration",
-    "Max Health",
-    "Shield",
-    "Reload"
-}
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Counters for each skill
-local counters, running, fireAmounts = {}, {}, {}
-for _, skill in ipairs(skillList) do
-    counters[skill] = 0
-    running[skill] = false
-    fireAmounts[skill] = 1
+--// Main Menu Setup
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "MainMenu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = PlayerGui
+
+-- Background Frame (Main Window)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 500, 0, 400)
+MainFrame.Position = UDim2.new(0.5, -250, 0.5, -200)
+MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+MainFrame.BorderSizePixel = 0
+MainFrame.Parent = ScreenGui
+
+-- Rainbow Border (animated)
+local BorderFrame = Instance.new("Frame")
+BorderFrame.Size = UDim2.new(1, 4, 1, 4)
+BorderFrame.Position = UDim2.new(0, -2, 0, -2)
+BorderFrame.BackgroundColor3 = Color3.fromRGB(255,0,0)
+BorderFrame.BorderSizePixel = 0
+BorderFrame.ZIndex = 0
+BorderFrame.Parent = MainFrame
+
+-- Function to animate rainbow border
+spawn(function()
+    local hue = 0
+    while true do
+        hue = (hue + 1) % 360
+        BorderFrame.BackgroundColor3 = Color3.fromHSV(hue/360, 1, 1)
+        task.wait(0.03)
+    end
+end)
+
+-- Title Bar
+local TitleBar = Instance.new("TextLabel")
+TitleBar.Size = UDim2.new(1, 0, 0, 40)
+TitleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+TitleBar.Text = "🌈 Modern Main Menu"
+TitleBar.TextColor3 = Color3.fromRGB(255, 255, 255)
+TitleBar.Font = Enum.Font.GothamBold
+TitleBar.TextSize = 20
+TitleBar.Parent = MainFrame
+
+-- Make main frame draggable
+local dragging, dragInput, dragStart, startPos
+local function update(input)
+    local delta = input.Position - dragStart
+    MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
+                                   startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+end
+MainFrame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        dragStart = input.Position
+        startPos = MainFrame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+MainFrame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        update(input)
+    end
+end)
+
+--// Tabs Container
+local TabsFrame = Instance.new("Frame")
+TabsFrame.Size = UDim2.new(0, 120, 1, -40)
+TabsFrame.Position = UDim2.new(0, 0, 0, 40)
+TabsFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+TabsFrame.BorderSizePixel = 0
+TabsFrame.Parent = MainFrame
+
+local Tabs = {} -- table to store tabs for switching
+
+-- Function to create a new tab button
+local function CreateTab(name)
+    local Button = Instance.new("TextButton")
+    Button.Size = UDim2.new(1, -10, 0, 40)
+    Button.Position = UDim2.new(0, 5, 0, (#Tabs*45) + 5)
+    Button.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    Button.TextColor3 = Color3.fromRGB(255,255,255)
+    Button.Font = Enum.Font.Gotham
+    Button.TextSize = 16
+    Button.Text = name
+    Button.Parent = TabsFrame
+
+    local ContentFrame = Instance.new("Frame")
+    ContentFrame.Size = UDim2.new(1, -120, 1, -40)
+    ContentFrame.Position = UDim2.new(0, 120, 0, 40)
+    ContentFrame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    ContentFrame.Visible = false
+    ContentFrame.Parent = MainFrame
+
+    Button.MouseButton1Click:Connect(function()
+        for _, tab in pairs(Tabs) do
+            tab.Frame.Visible = false
+        end
+        ContentFrame.Visible = true
+    end)
+
+    table.insert(Tabs, {Button = Button, Frame = ContentFrame})
+    return ContentFrame
 end
 
--- For each skill, create a toggle + fire count input
-for _, skill in ipairs(skillList) do
-    -- Fire Amount Input (TextBox replacement)
-    SkillsSection:AddTextbox({
-        Name = skill.." Fire Amount",
-        Default = "1",
-        TextDisappear = false,
-        Callback = function(value)
-            local val = tonumber(value)
-            if val and val > 0 then
-                fireAmounts[skill] = val
-            else
-                fireAmounts[skill] = 1
-            end
-        end
-    })
+--// Create "Auto Skills" tab and populate with your existing GUI
+local AutoSkillsTab = CreateTab("Auto Skills")
 
-    -- Toggle for auto upgrade
-    SkillsSection:AddToggle({
-        Name = skill.." Auto Upgrade",
-        Default = false,
-        Callback = function(Value)
-            running[skill] = Value
-            if Value then
-                task.spawn(function()
-                    for _ = 1, fireAmounts[skill] do
-                        if not running[skill] then break end
-                        SkillUpgrade:FireServer(skill)
-                        counters[skill] += 1
-                        print(skill.." upgraded! Total: "..counters[skill])
-                        task.wait() -- allows other processes to run
-                    end
-                    running[skill] = false
-                    -- Automatically toggle off in Orion UI
-                    SkillsSection:GetToggle(skill.." Auto Upgrade"):Set(false)
-                end)
-            end
+-- Copy your existing Auto Skills code here and parent everything to AutoSkillsTab instead of MainFrame
+-- Example conversion for SkillLabel, FireBox, CounterLabel, Toggle:
+for i, skill in ipairs(skillList) do
+    local yPos = 10 + (i-1)*45 -- adjusted y position inside tab
+
+    local SkillLabel = Instance.new("TextLabel")
+    SkillLabel.Size = UDim2.new(0, 130, 0, 40)
+    SkillLabel.Position = UDim2.new(0, 10, 0, yPos)
+    SkillLabel.BackgroundTransparency = 1
+    SkillLabel.TextColor3 = Color3.fromRGB(255,255,255)
+    SkillLabel.Font = Enum.Font.SourceSansBold
+    SkillLabel.TextSize = 16
+    SkillLabel.Text = skill
+    SkillLabel.TextXAlignment = Enum.TextXAlignment.Left
+    SkillLabel.Parent = AutoSkillsTab
+
+    local FireBox = Instance.new("TextBox")
+    FireBox.Size = UDim2.new(0, 50, 0, 30)
+    FireBox.Position = UDim2.new(0, 150, 0, yPos+5)
+    FireBox.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    FireBox.TextColor3 = Color3.fromRGB(255,255,255)
+    FireBox.Font = Enum.Font.Code
+    FireBox.TextSize = 16
+    FireBox.Text = "1"
+    FireBox.Parent = AutoSkillsTab
+
+    local CounterLabel = Instance.new("TextLabel")
+    CounterLabel.Size = UDim2.new(0, 60, 0, 30)
+    CounterLabel.Position = UDim2.new(0, 210, 0, yPos+5)
+    CounterLabel.BackgroundTransparency = 1
+    CounterLabel.TextColor3 = Color3.fromRGB(0,255,0)
+    CounterLabel.Font = Enum.Font.Code
+    CounterLabel.TextSize = 14
+    CounterLabel.Text = "0"
+    CounterLabel.Parent = AutoSkillsTab
+
+    local Toggle = Instance.new("TextButton")
+    Toggle.Size = UDim2.new(0, 60, 0, 30)
+    Toggle.Position = UDim2.new(0, 280, 0, yPos+5)
+    Toggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    Toggle.TextColor3 = Color3.fromRGB(255,255,255)
+    Toggle.Font = Enum.Font.SourceSansBold
+    Toggle.TextSize = 16
+    Toggle.Text = "OFF"
+    Toggle.Parent = AutoSkillsTab
+
+    -- Input and toggle logic
+    FireBox.FocusLost:Connect(function()
+        local val = tonumber(FireBox.Text)
+        if val and val > 0 then
+            fireAmounts[skill] = val
+        else
+            FireBox.Text = tostring(fireAmounts[skill])
         end
-    })
+    end)
+    Toggle.MouseButton1Click:Connect(function()
+        running[skill] = not running[skill]
+        Toggle.Text = running[skill] and "ON" or "OFF"
+        Toggle.BackgroundColor3 = running[skill] and Color3.fromRGB(0,170,0) or Color3.fromRGB(45,45,45)
+
+        if running[skill] then
+            task.spawn(function()
+                for _ = 1, fireAmounts[skill] do
+                    if not running[skill] then break end
+                    SkillUpgrade:FireServer(skill)
+                    counters[skill] += 1
+                    CounterLabel.Text = tostring(counters[skill])
+                    task.wait()
+                end
+                running[skill] = false
+                Toggle.Text = "OFF"
+                Toggle.BackgroundColor3 = Color3.fromRGB(45,45,45)
+            end)
+        end
+    end)
 end
 
---// Initialize Orion UI
-OrionLib:Init()
+--// Notes for expanding menu:
+-- 1. Create more tabs using: local NewTab = CreateTab("Tab Name")
+-- 2. Parent new UI elements to NewTab
+-- 3. You can add sliders, buttons, labels in each tab similarly
+-- 4. Rainbow border can be adjusted in speed or size
+-- 5. Dragging works for whole window
