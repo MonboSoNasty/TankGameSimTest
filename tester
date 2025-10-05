@@ -14,12 +14,7 @@ local Localization = WindUI:Localization({
             ["FEATURES"] = "Features",
             ["UTILITIES"] = "Utilities",
             ["UI_ELEMENTS"] = "UI Elements",
-            ["CONFIGURATION"] = "Configuration",
-            ["SAVE_CONFIG"] = "Save Configuration",
-            ["LOAD_CONFIG"] = "Load Configuration",
-            ["THEME_SELECT"] = "Select Theme",
-            ["TRANSPARENCY"] = "Window Transparency",
-            ["LOCKED_TAB"] = "Locked Tab"
+            ["CONFIGURATION"] = "Configuration"
         }
     }
 })
@@ -82,6 +77,7 @@ Window.User:SetAnonymous(true)
 Window:SetIconSize(48)
 Window:Tag({ Title = "v1.6.4", Color = Color3.fromHex("#30ff6a") })
 Window:Tag({ Title = "Beta", Color = Color3.fromHex("#315dff") })
+
 local TimeTag = Window:Tag({
     Title = "--:--",
     Radius = 0,
@@ -91,14 +87,10 @@ local TimeTag = Window:Tag({
     }, { Rotation = 45 })
 })
 
-local hue = 0
 task.spawn(function()
 	while true do
 		local now = os.date("*t")
-		local hours = string.format("%02d", now.hour)
-		local minutes = string.format("%02d", now.min)
-		hue = (hue + 0.01) % 1
-		TimeTag:SetTitle(hours .. ":" .. minutes)
+		TimeTag:SetTitle(string.format("%02d:%02d", now.hour, now.min))
 		task.wait(0.06)
 	end
 end)
@@ -112,25 +104,23 @@ Window:CreateTopbarButton("theme-switcher", "moon", function()
     })
 end, 990)
 
+--// Sections
 local Sections = {
     Main = Window:Section({ Title = "loc:FEATURES", Opened = true }),
     Settings = Window:Section({ Title = "loc:SETTINGS", Opened = true }),
     Utilities = Window:Section({ Title = "loc:UTILITIES", Opened = true })
 }
 
+--// Tabs
 local Tabs = {
-    Elements = Sections.Main:Tab({ Title = "loc:UI_ELEMENTS", Icon = "layout-grid", Desc = "UI Elements Example" }),
+    Elements = Sections.Main:Tab({ Title = "loc:UI_ELEMENTS", Icon = "layout-grid" }),
+    AutoSkills = Sections.Main:Tab({ Title = "OP AutoSkills", Icon = "zap" }),
     Appearance = Sections.Settings:Tab({ Title = "loc:APPEARANCE", Icon = "brush" }),
-    Config = Sections.Utilities:Tab({ Title = "loc:CONFIGURATION", Icon = "settings" }),
-    LockedTab1 = Window:Tab({ Title = "OP AutoSkills", Icon = "zap", Locked = false }),
-    LockedTab2 = Window:Tab({ Title = "loc:LOCKED_TAB", Icon = "bird", Locked = true }),
-    LockedTab3 = Window:Tab({ Title = "loc:LOCKED_TAB", Icon = "bird", Locked = true }),
-    LockedTab4 = Window:Tab({ Title = "loc:LOCKED_TAB", Icon = "bird", Locked = true }),
-    LockedTab5 = Window:Tab({ Title = "loc:LOCKED_TAB", Icon = "bird", Locked = true }),
+    Config = Sections.Utilities:Tab({ Title = "loc:CONFIGURATION", Icon = "settings" })
 }
 
 ---------------------------------------------------------------------
---// OP AutoSkills Integration
+--// OP AutoSkills Tab
 ---------------------------------------------------------------------
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SkillUpgrade = ReplicatedStorage:WaitForChild("Skills"):WaitForChild("Upgrade")
@@ -146,21 +136,18 @@ local skillList = {
     "Reload"
 }
 
-local counters, running, fireAmounts = {}, {}, {}
+local running, fireAmounts = {}, {}
 for _, skill in ipairs(skillList) do
-    counters[skill] = 0
     running[skill] = false
     fireAmounts[skill] = 1
 end
 
-local SkillSection = Tabs.LockedTab1:Section({
-    Title = "⚙️ OP Auto Skill Control",
-    TextSize = 20
-})
+Tabs.AutoSkills:Section({ Title = "⚙️ OP Auto Skill Control", TextSize = 20 })
 
 for _, skill in ipairs(skillList) do
-    SkillSection:Divider({ Title = "⠀" })
-    local SkillToggle = SkillSection:Toggle({
+    Tabs.AutoSkills:Divider({ Title = "⠀" })
+    
+    local SkillToggle = Tabs.AutoSkills:Toggle({
         Title = skill,
         Desc = "Auto-upgrade " .. skill,
         Value = false,
@@ -171,14 +158,13 @@ for _, skill in ipairs(skillList) do
                     for _ = 1, fireAmounts[skill] do
                         if not running[skill] then break end
                         SkillUpgrade:FireServer(skill)
-                        counters[skill] += 1
                         task.wait()
                     end
                     running[skill] = false
                     SkillToggle:Set(false)
                     WindUI:Notify({
                         Title = "AutoSkills",
-                        Content = skill .. " upgrades finished!",
+                        Content = skill .. " upgrades complete!",
                         Duration = 2
                     })
                 end)
@@ -186,7 +172,7 @@ for _, skill in ipairs(skillList) do
         end
     })
 
-    local InputBox = SkillSection:Input({
+    Tabs.AutoSkills:Input({
         Title = "Fire Count for " .. skill,
         Value = tostring(fireAmounts[skill]),
         Placeholder = "Enter amount (e.g. 5)",
@@ -197,70 +183,42 @@ for _, skill in ipairs(skillList) do
             else
                 WindUI:Notify({
                     Title = "Invalid Input",
-                    Content = "Please enter a valid number above 0.",
+                    Content = "Please enter a number above 0.",
                     Duration = 2
                 })
             end
         end
     })
-
-    local CounterLabel = SkillSection:Paragraph({
-        Title = "Total Fired: " .. counters[skill],
-        Desc = "",
-        Color = Color3.fromHex("#30ff6a")
-    })
-
-    task.spawn(function()
-        while task.wait(1) do
-            CounterLabel:Set("Total Fired: " .. counters[skill])
-        end
-    end)
 end
 
 ---------------------------------------------------------------------
--- Rest of the WindUI demo content below
+--// Example UI Elements Tab
 ---------------------------------------------------------------------
-
 Tabs.Elements:Section({ Title = "Interactive Components", TextSize = 20 })
-Tabs.Elements:Section({ Title = "Explore WindUI's powerful elements", TextSize = 16, TextTransparency = .25 })
 Tabs.Elements:Divider()
 
-local ElementsSection = Tabs.Elements:Section({ Title = "Section Example", Icon = "bird" })
-local toggleState = false
-local featureToggle = ElementsSection:Toggle({
+local ElementsSection = Tabs.Elements:Section({ Title = "Examples", Icon = "bird" })
+ElementsSection:Toggle({
     Title = "Enable Features",
     Value = false,
     Callback = function(state)
-        toggleState = state
         WindUI:Notify({
             Title = "Features",
             Content = state and "Features Enabled" or "Features Disabled",
-            Icon = state and "check" or "x",
             Duration = 2
         })
     end
 })
 
-local intensitySlider = ElementsSection:Slider({
+ElementsSection:Slider({
     Title = "Effect Intensity",
     Desc = "Adjust the effect strength",
     Value = { Min = 0, Max = 100, Default = 50 },
     Callback = function(value)
-        print("Intensity set to:", value)
+        print("Intensity:", value)
     end
 })
 
-local values = {}
-for i = 1, 40 do table.insert(values, "Test " .. i) end
-ElementsSection:Space()
-local testDropdown = ElementsSection:Dropdown({
-    Title = "Dropdown test",
-    Values = values,
-    Value = "Test 1",
-    Callback = function(option) end
-})
-testDropdown:Refresh(values)
-ElementsSection:Divider()
 ElementsSection:Button({
     Title = "Show Notification",
     Icon = "bell",
@@ -273,6 +231,7 @@ ElementsSection:Button({
         })
     end
 })
+
 ElementsSection:Colorpicker({
     Title = "Select Color",
     Default = Color3.fromHex("#30ff6a"),
@@ -280,18 +239,8 @@ ElementsSection:Colorpicker({
     Callback = function(color, transparency)
         WindUI:Notify({
             Title = "Color Changed",
-            Content = "New color: "..color:ToHex().."\nTransparency: "..transparency,
+            Content = "Color: "..color:ToHex().." Transparency: "..transparency,
             Duration = 2
         })
     end
 })
-ElementsSection:Code({
-    Title = "my_code.luau",
-    Code = [[print("Hello world!")]],
-    OnCopy = function() print("Copied to clipboard!") end
-})
-
--- Appearance / Config parts remain same as original ...
--- (No changes to those sections, fully preserved from your original script)
-
--- Keep rest of config manager, appearance, save/load logic exactly as-is.
